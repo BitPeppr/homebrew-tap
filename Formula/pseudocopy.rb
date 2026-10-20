@@ -1,8 +1,8 @@
 class Pseudocopy < Formula
   desc "Copy every new file in a folder to the clipboard and reap old ones"
   homepage "https://github.com/BitPeppr/pseudocopy"
-  url "https://github.com/BitPeppr/pseudocopy/releases/download/v1.0.1/pseudocopy-1.0.1-macos-universal.tar.gz"
-  sha256 "a486d96a0d694f29e1b7b9a7c47ed80c74cac19ed6e3356b42f27e1201a76183"
+  url "https://github.com/BitPeppr/pseudocopy/releases/download/v1.0.2/pseudocopy-1.0.2-macos-universal.tar.gz"
+  sha256 "ec67f937838c568a6ef70853df009b30926116ffd1d2c2abad27bb26946387d0"
   license "MIT"
 
   depends_on macos: :ventura
@@ -16,7 +16,7 @@ class Pseudocopy < Formula
     run_type :interval
     interval 5
     throttle_interval 5
-    process_type :background
+    process_type :interactive
     log_path "#{Dir.home}/Library/Logs/pseudocopy.log"
     error_log_path "#{Dir.home}/Library/Logs/pseudocopy.log"
   end
@@ -27,12 +27,16 @@ class Pseudocopy < Formula
         brew services start pseudocopy
 
       It copies every settled file in ~/Temp to the clipboard and moves files
-      older than an hour to the Trash. Do not also run `pseudocopy install`:
-      that would register a second agent.
+      older than an hour to the Trash. Files that are already in ~/Temp when
+      the service first starts are treated as leftovers and are not copied;
+      files older than the TTL are still moved to the Trash. The log is at
+      ~/Library/Logs/pseudocopy.log.
 
-      This service watches ~/Temp. To watch another folder, stop it and
-      install the agent from a source checkout instead (see the README):
+      `pseudocopy install` refuses to run while this service is loaded — do
+      not try to register a second agent. To use the built-in installer (for
+      example to watch a different folder), stop the service first:
         brew services stop pseudocopy
+        pseudocopy install --dir ~/some-other-folder
     EOS
   end
 
