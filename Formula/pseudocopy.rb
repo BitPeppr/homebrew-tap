@@ -1,8 +1,8 @@
 class Pseudocopy < Formula
   desc "Copy every new file in a folder to the clipboard and reap old ones"
   homepage "https://github.com/BitPeppr/pseudocopy"
-  url "https://github.com/BitPeppr/pseudocopy/releases/download/v1.0.2/pseudocopy-1.0.2-macos-universal.tar.gz"
-  sha256 "ec67f937838c568a6ef70853df009b30926116ffd1d2c2abad27bb26946387d0"
+  url "https://github.com/BitPeppr/pseudocopy/releases/download/v1.0.3/pseudocopy-1.0.3-macos-universal.tar.gz"
+  sha256 "4458f7d10af9d7e42c85d0c6469d788bf2bd653594f8a0c17b5261d78b2970ed"
   license "MIT"
 
   depends_on macos: :ventura
@@ -11,14 +11,29 @@ class Pseudocopy < Formula
     bin.install "pseudocopy"
   end
 
+  # The agent reads everything from its settings file, so the service and the
+  # command line always agree. Only the two values that launchd itself has to
+  # know — the check interval and the log file — are copied into the plist
+  # here, and they are read from the same file.
+  def self.pseudocopy_settings
+    root = ENV["PSEUDOCOPY_STATE_ROOT"] || "#{Dir.home}/Library/Application Support/pseudocopy"
+    file = File.join(root, "config.json")
+    return {} unless File.file?(file)
+
+    JSON.parse(File.read(file))
+  rescue
+    {}
+  end
+
+  settings = Pseudocopy.pseudocopy_settings
   service do
     run [opt_bin/"pseudocopy", "run"]
     run_type :interval
-    interval 5
-    throttle_interval 5
+    interval [1, (settings["interval"] || 5).to_i].max
+    throttle_interval [1, (settings["interval"] || 5).to_i].max
     process_type :interactive
-    log_path "#{Dir.home}/Library/Logs/pseudocopy.log"
-    error_log_path "#{Dir.home}/Library/Logs/pseudocopy.log"
+    log_path settings["logPath"] || "#{Dir.home}/Library/Logs/pseudocopy.log"
+    error_log_path settings["logPath"] || "#{Dir.home}/Library/Logs/pseudocopy.log"
   end
 
   def caveats
@@ -31,6 +46,16 @@ class Pseudocopy < Formula
       the service first starts are treated as leftovers and are not copied;
       files older than the TTL are still moved to the Trash. The log is at
       ~/Library/Logs/pseudocopy.log.
+
+      Everything is configurable from the command line:
+        pseudocopy config list           # show every setting
+        pseudocopy config set ttl 600    # keep files for ten minutes
+        pseudocopy config set dir ~/Downloads
+        pseudocopy config set interval 10
+      The settings live in ~/Library/Application Support/pseudocopy/config.json.
+      The agent picks them up on its next cycle; after changing the check
+      interval or the log path, run 'brew services restart pseudocopy' so the
+      plist matches.
 
       `pseudocopy install` refuses to run while this service is loaded — do
       not try to register a second agent. To use the built-in installer (for
