@@ -1,8 +1,8 @@
 class Pseudocopy < Formula
   desc "Copy every new file in a folder to the clipboard and reap old ones"
   homepage "https://github.com/BitPeppr/pseudocopy"
-  url "https://github.com/BitPeppr/pseudocopy/releases/download/v1.2.0/pseudocopy-1.2.0-macos-universal.tar.gz"
-  sha256 "d1d3ae25f35b215f883a7e1b51dc1fc29dc817e975128f9dbc4a371aa5c9217f"
+  url "https://github.com/BitPeppr/pseudocopy/releases/download/v1.2.1/pseudocopy-1.2.1-macos-universal.tar.gz"
+  sha256 "cbadcec077e6d0c3e1bec83d838982dc1495683bd5dde90dcf713417f23116a9"
   license "MIT"
 
   depends_on macos: :ventura
